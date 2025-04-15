@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Sensei Payment</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        :root {
+            --glow-color: #00ffff; /* Cyan glow */
+            --bg-gradient: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460, #0e1a2e);
+            --text-color: #e0e0e0;
+            --button-bg: #1f4287;
+            --button-hover-bg: #27496d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: bg-animation 15s ease infinite;
+            color: var(--text-color);
+            overflow: hidden; /* Hide scrollbars during loading */
+        }
+
+        @keyframes bg-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            position: relative;
+            text-align: center;
+            padding: 30px;
+            background-color: rgba(25, 25, 45, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 255, 255, 0.18);
+            max-width: 90%;
+             width: 400px; /* Set a fixed width or max-width as needed */
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0e1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid var(--glow-color);
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Sections */
+        .section {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.8s ease-out;
+            width: 100%;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Welcome Screen */
+        #welcome-screen h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: .10em solid var(--glow-color);
+            width: 0;
+            animation: typing 2s steps(20, end) forwards, blink-caret .75s step-end infinite;
+            animation-delay: 0.5s; /* Delay typing until loading is likely done */
+            display: inline-block; /* Needed for width animation */
+            opacity: 0; /* Initially hidden before animation */
+        }
+
+         #welcome-screen h1.typing-done {
+             border-right: none; /* Remove caret when done */
+         }
+
+        @keyframes typing {
+          from { width: 0; opacity: 1;}
+          to { width: 100%; opacity: 1;}
+        }
+
+        @keyframes blink-caret {
+          from, to { border-color: transparent }
+          50% { border-color: var(--glow-color); }
+        }
+
+        /* Payment Screen */
+        #payment-screen img.qris-img {
+            max-width: 70%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+             animation: popIn 0.6s ease-out 0.2s backwards;
+        }
+
+        .payment-options, .payment-details {
+            margin-top: 20px;
+             animation: slideUpFadeIn 0.6s ease-out 0.4s backwards;
+        }
+
+         @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1;}
+            100% { transform: scale(1); opacity: 1;}
+        }
+
+         @keyframes slideUpFadeIn {
+            0% { transform: translateY(30px); opacity: 0; }
+            100% { transform: translateY(0px); opacity: 1;}
+        }
+
+        .payment-details .details {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+             border-left: 4px solid var(--glow-color);
+            text-align: left;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .payment-details p {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+             word-break: break-all; /* Break long numbers */
+        }
+         .payment-details p strong {
+             color: var(--glow-color);
+         }
+
+
+        /* Buttons */
+        .btn {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            box-shadow: 0 0 10px 0 rgba(0, 255, 255, 0.3), 0 0 20px 0 rgba(0, 255, 255, 0.2);
+             opacity: 0; /* Hidden initially for animation */
+             animation: fadeIn 0.8s ease-out 1s forwards; /* Delayed fade in */
+        }
+
+        #welcome-screen .btn {
+             animation: fadeIn 0.8s ease-out 2.8s forwards; /* Longer delay after typing */
+        }
+
+        .btn:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px 0 var(--glow-color), 0 0 30px 0 rgba(0, 255, 255, 0.4);
+        }
+
+        .btn-back {
+            background-color: transparent;
+            color: var(--glow-color);
+            border: 1px solid var(--glow-color);
+            padding: 8px 15px;
+            font-size: 0.9em;
+            margin-top: 25px;
+            box-shadow: 0 0 8px 0 rgba(0, 255, 255, 0.3);
+            animation-delay: 0.8s; /* Delay for back button */
+        }
+
+        .btn-back:hover {
+            background-color: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 12px 0 var(--glow-color);
+        }
+
+         /* Utility */
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="loading-screen" id="loading-screen">
+        <div class="loader"></div>
+    </div>
+
+    <div class="container">
+        <div class="section active" id="welcome-screen">
+             <h1 id="typing-text">Hi, i'am azure sensei Payment</h1>
+            <button class="btn" id="start-btn">Start</button>
+        </div>
+
+        <div class="section" id="payment-screen">
+             <img src="https://files.catbox.moe/xxgbeo.jpg" alt="QRIS Code" class="qris-img">
+             <div class="payment-options">
+                <button class="btn" id="ewallet-btn">E-Wallet</button>
+                <button class="btn" id="bank-btn">Transfer Bank</button>
+             </div>
+
+            <div class="payment-details">
+                <div id="ewallet-details" class="details hidden">
+                     <p><strong>Dana:</strong> 083176597242</p>
+                     <p><strong>Gopay:</strong> 083176597242</p>
+                     <p><strong>OVO:</strong> 083176597242</p>
+                </div>
+                 <div id="bank-details" class="details hidden">
+                    <p><strong>BRI:</strong> xxxxxxxxxx (belum tersedia)</p>
+                 </div>
+             </div>
+
+             <button class="btn btn-back" id="back-btn">Back</button>
+        </div>
+    </div>
+
+    <script>
+        const loadingScreen = document.getElementById('loading-screen');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const paymentScreen = document.getElementById('payment-screen');
+        const startBtn = document.getElementById('start-btn');
+        const ewalletBtn = document.getElementById('ewallet-btn');
+        const bankBtn = document.getElementById('bank-btn');
+        const backBtn = document.getElementById('back-btn');
+        const ewalletDetails = document.getElementById('ewallet-details');
+        const bankDetails = document.getElementById('bank-details');
+        const typingText = document.getElementById('typing-text');
+
+        function switchScreen(hideScreen, showScreen) {
+            hideScreen.classList.remove('active');
+            // Use timeout to allow fade-out animation if needed, then show next screen
+            setTimeout(() => {
+                 hideScreen.style.display = 'none'; // Ensure it's fully hidden for layout
+                 showScreen.style.display = 'block'; // Prepare next screen
+                 // Timeout ensures display:block happens before adding .active for animation
+                 setTimeout(() => showScreen.classList.add('active'), 10);
+            }, 300); // Adjust timing based on CSS animation duration
+        }
+
+         function showDetails(detailsToShow, detailsToHide) {
+             detailsToHide.classList.add('hidden');
+             detailsToShow.classList.remove('hidden');
+         }
+
+        // --- Event Listeners ---
+         startBtn.addEventListener('click', () => {
+             // Hide specific welcome elements if needed, then switch
+             // welcomeScreen.querySelector('h1').style.display = 'none'; // Example if needed
+             // startBtn.style.display = 'none'; // Example if needed
+             switchScreen(welcomeScreen, paymentScreen);
+             // Reset payment details visibility
+             ewalletDetails.classList.add('hidden');
+             bankDetails.classList.add('hidden');
+        });
+
+         ewalletBtn.addEventListener('click', () => {
+            showDetails(ewalletDetails, bankDetails);
+         });
+
+         bankBtn.addEventListener('click', () => {
+             showDetails(bankDetails, ewalletDetails);
+         });
+
+         backBtn.addEventListener('click', () => {
+            switchScreen(paymentScreen, welcomeScreen);
+             // Optional: Restart typing animation if desired on back
+            typingText.style.width = '0'; // Reset width
+            typingText.classList.remove('typing-done');
+             // Force reflow to restart animation
+             void typingText.offsetWidth;
+             typingText.style.animation = 'none'; // Temporarily remove animation
+            setTimeout(() => { // Reapply animation
+                 typingText.style.animation = 'typing 2s steps(20, end) forwards, blink-caret .75s step-end infinite';
+                 typingText.style.animationDelay = '0.2s'; // Short delay on back
+                 // Re-add the class removal after animation ends
+                 setTimeout(() => typingText.classList.add('typing-done'), 2200); // 2s typing + 0.2s delay
+             }, 10);
+         });
+
+         // --- Initial Setup ---
+         window.addEventListener('load', () => {
+             // Hide loading screen after a delay
+            setTimeout(() => {
+                 loadingScreen.classList.add('hidden');
+                 document.body.style.overflow = 'auto'; // Restore scrollbars if needed
+
+                // Start welcome animation only after loading is hidden
+                 welcomeScreen.classList.add('active'); // Make welcome visible
+                 // Trigger typing animation (it should start via CSS animation-delay now)
+                 // Add class when typing animation ends
+                 setTimeout(() => {
+                      typingText.classList.add('typing-done');
+                 }, 2500); // Match animation duration + delay (2s + 0.5s)
+             }, 1500); // Adjust loading screen duration (milliseconds)
+        });
+
+    </script>
+</body>
+</html>
